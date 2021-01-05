@@ -10,10 +10,10 @@ repositories {
 }
 
 dependencies {
-    implementation(kotlin("stdlib"))
-    implementation("io.projectreactor:reactor-core:3.4.1")
-    implementation("com.github.kittinunf.fuel:fuel:2.3.1")
-    implementation("com.github.kittinunf.fuel:fuel-reactor:2.3.1")
-    implementation("com.github.kittinunf.fuel:fuel-gson:2.3.1")
-
+    api(kotlin("stdlib"))
+    api("io.projectreactor:reactor-core:3.4.1")
+    api("io.projectreactor.kotlin:reactor-kotlin-extensions:1.1.1")
+    api("com.github.kittinunf.fuel:fuel:2.3.1")
+    api("com.github.kittinunf.fuel:fuel-reactor:2.3.1")
+    api("org.json:json:20201115")
 }
