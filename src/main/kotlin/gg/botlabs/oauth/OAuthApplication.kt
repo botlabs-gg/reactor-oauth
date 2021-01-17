@@ -26,7 +26,7 @@ class OAuthApplication(
             "redirect_uri" to redirectUri,
             scope?.let { "scope" to it.joinToString(" ") }
         )
-    ).toGrantMono(handler)
+    ).toGrantMono(handler, false)
 
     /** Attempts to refresh a grant */
     fun <T> refreshGrant(handler: RefreshHandler<T>, grant: TokenGrant): Mono<T> = tokenUrl.httpPost(
@@ -38,7 +38,7 @@ class OAuthApplication(
             "redirect_uri" to redirectUri,
             grant.scope?.let { "scope" to it.joinToString(" ") }
         )
-    ).toGrantMono(handler)
+    ).toGrantMono(handler, true)
 
     /** Returns immediately if the bearer has not expired. Otherwise calls [refreshGrant] */
     fun <T> getFreshGrant(handler: RefreshHandler<T>, grant: TokenGrant, toleranceSeconds: Long = 10): Mono<T> {
@@ -46,7 +46,7 @@ class OAuthApplication(
         return refreshGrant(handler, grant)
     }
 
-    private fun <T> Request.toGrantMono(handler: GrantHandler<T>): Mono<T> = header("Accept", "application/json")
+    private fun <T> Request.toGrantMono(handler: GrantHandler<T>, isRefresh: Boolean): Mono<T> = header("Accept", "application/json")
         .monoResponse()
         .flatMap { res ->
             val bodyStr = res.data.decodeToString()
@@ -57,11 +57,12 @@ class OAuthApplication(
                 OAuthException.onInvalidJson(bodyStr)
             }
 
-            if (!res.isSuccessful && handler is RefreshHandler) {
+            if (!res.isSuccessful) {
+                if (!isRefresh) OAuthException.onError(json)
+
+                val refreshHandler = handler as RefreshHandler
                 @Suppress("UNCHECKED_CAST") // Type cast safe as Mono<Void> returns empty
-                return@flatMap handler.onFailure(res) as Mono<T>
-            } else if (!res.isSuccessful) {
-                OAuthException.onError(json)
+                return@flatMap refreshHandler.onFailure(res) as Mono<T>
             }
 
             handler.handleTokenGrant(json.run {
