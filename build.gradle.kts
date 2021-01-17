@@ -1,3 +1,5 @@
+import java.net.URI
+
 plugins {
     kotlin("jvm") version "1.4.21"
 }
@@ -7,6 +9,7 @@ version = "1.0-SNAPSHOT"
 
 repositories {
     mavenCentral()
+    maven { url = URI.create("https://jitpack.io") }
 }
 
 dependencies {
@@ -16,4 +19,7 @@ dependencies {
     api("com.github.kittinunf.fuel:fuel:2.3.1")
     api("com.github.kittinunf.fuel:fuel-reactor:2.3.1")
     api("org.json:json:20201115")
+    testImplementation(platform("org.junit:junit-bom:5.7.0"))
+    testImplementation("org.junit.jupiter:junit-jupiter")
+    testImplementation("com.github.KennethWussmann:mock-fuel:1.3.0")
 }
