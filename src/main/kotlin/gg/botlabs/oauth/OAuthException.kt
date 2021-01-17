@@ -9,13 +9,13 @@ class OAuthException(override val message: String, val rfcError: String? = null)
 
 
     companion object {
-        fun onInvalidJson(id: Any?, body: String): Nothing {
-            throw OAuthException("Failed to get grant for $id. Invalid JSON response: $body")
+        fun onInvalidJson(body: String): Nothing {
+            throw OAuthException("Failed to get grant. Invalid JSON response: $body")
         }
 
-        fun onError(id: Any?, json: JSONObject): Nothing {
-            val error = json.optString("error") ?: throw IllegalStateException("Failed to get grant for $id: $json")
-            throw OAuthException("Failed to get grant for $id: $error", error)
+        fun onError(json: JSONObject): Nothing {
+            val error = json.optString("error") ?: throw IllegalStateException("Failed to get grant: $json")
+            throw OAuthException("Failed to get grant: $error", error)
         }
     }
 

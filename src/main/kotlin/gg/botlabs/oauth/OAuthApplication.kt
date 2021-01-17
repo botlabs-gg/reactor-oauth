@@ -6,20 +6,18 @@ import com.github.kittinunf.fuel.httpPost
 import com.github.kittinunf.fuel.reactor.monoResponse
 import org.json.JSONObject
 import reactor.core.publisher.Mono
-import reactor.kotlin.core.publisher.toMono
 import java.time.Instant
 
 @Suppress("MemberVisibilityCanBePrivate", "unused")
-class OAuthApplication<ID>(
+class OAuthApplication(
     val tokenUrl: String,
     val clientId: String,
     val clientSecret: String,
-    val redirectUri: String,
-    val oauthPersistence: OAuthPersistence<ID>
+    val redirectUri: String
 ) {
 
-    /** Exchanges the code for a new grant of type authorization_code and persists it */
-    fun exchangeCode(id: ID, code: String, scope: List<String>? = null): Mono<TokenGrant<ID>> = tokenUrl.httpPost(
+    /** Exchanges the code for a new grant of type authorization_code */
+    fun <T> exchangeCode(handler: GrantHandler<T>, code: String, scope: List<String>? = null): Mono<T> = tokenUrl.httpPost(
         listOfNotNull(
             "client_id" to clientId,
             "client_secret" to clientSecret,
@@ -28,10 +26,10 @@ class OAuthApplication<ID>(
             "redirect_uri" to redirectUri,
             scope?.let { "scope" to it.joinToString(" ") }
         )
-    ).toGrantMono(id).flatMap { oauthPersistence.put(it) }
+    ).toGrantMono(handler)
 
-    /** Attempts to refresh a grant, or delete it if it has expired */
-    fun refreshGrant(grant: TokenGrant<ID>): Mono<TokenGrant<ID>> = tokenUrl.httpPost(
+    /** Attempts to refresh a grant */
+    fun <T> refreshGrant(handler: RefreshHandler<T>, grant: TokenGrant): Mono<T> = tokenUrl.httpPost(
         listOfNotNull(
             "client_id" to clientId,
             "client_secret" to clientSecret,
@@ -40,36 +38,40 @@ class OAuthApplication<ID>(
             "redirect_uri" to redirectUri,
             grant.scope?.let { "scope" to it.joinToString(" ") }
         )
-    ).toGrantMono(grant.id).flatMap { oauthPersistence.put(it) }
+    ).toGrantMono(handler)
 
     /** Returns immediately if the bearer has not expired. Otherwise calls [refreshGrant] */
-    fun getFreshGrant(grant: TokenGrant<ID>, toleranceSeconds: Long = 10): Mono<TokenGrant<ID>> {
-        if (grant.expires.minusSeconds(toleranceSeconds).isBefore(Instant.now())) return grant.toMono()
-        return refreshGrant(grant)
+    fun <T> getFreshGrant(handler: RefreshHandler<T>, grant: TokenGrant, toleranceSeconds: Long = 10): Mono<T> {
+        if (grant.expires.minusSeconds(toleranceSeconds).isBefore(Instant.now())) return Mono.just(handler.onUnchanged())
+        return refreshGrant(handler, grant)
     }
 
-    private fun Request.toGrantMono(id: ID): Mono<TokenGrant<ID>> = header("Accept", "application/json")
+    private fun <T> Request.toGrantMono(handler: GrantHandler<T>): Mono<T> = header("Accept", "application/json")
         .monoResponse()
-        .map { res ->
+        .flatMap { res ->
             val bodyStr = res.data.decodeToString()
             val json: JSONObject
             try {
                 json = JSONObject()
             } catch (e: Exception) {
-                OAuthException.onInvalidJson(id, bodyStr)
+                OAuthException.onInvalidJson(bodyStr)
             }
 
-            if (!res.isSuccessful) OAuthException.onError(id, json)
+            if (!res.isSuccessful && handler is RefreshHandler) {
+                @Suppress("UNCHECKED_CAST") // Type cast safe as Mono<Void> returns empty
+                return@flatMap handler.onFailure(res) as Mono<T>
+            } else if (!res.isSuccessful) {
+                OAuthException.onError(json)
+            }
 
-            json.run {
+            handler.handleTokenGrant(json.run {
                 TokenGrant(
-                    id,
                     getString("access_token"),
                     getString("refresh_token"),
                     optString("scope")?.split(' '),
                     Instant.now().plusSeconds(getLong("expires_in"))
                 )
-            }
+            })
         }
 
 }
