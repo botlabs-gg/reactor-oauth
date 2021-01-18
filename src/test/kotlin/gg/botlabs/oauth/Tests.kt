@@ -28,19 +28,7 @@ class Tests {
         val refresh = "refresh token"
         val scope = listOf("one", "two", "three")
 
-        mock.on {
-            MockResponse(
-                200, """
-                {
-                    "access_token": "$bearer",
-                    "refresh_token": "$refresh",
-                    "token_type": "Bearer",
-                    "expires_in": 604800,
-                    "scope": "${scope.joinToString(" ")}"
-                }
-            """.trimIndent().toByteArray()
-            )
-        }
+        mock.accessTokenResponse(bearer, refresh, scope)
 
         app.exchangeCode(handler, code, scope)
             .verifier()
@@ -63,10 +51,65 @@ class Tests {
         }
     }
 
+    @Test
+    fun refreshToken(mock: MockFuelStore) {
+        val oldGrant = TokenGrant(
+            bearerToken = "old bearer, ignored",
+            refreshToken = "old refresh",
+            scope = listOf("one", "two", "three"),
+            expires = Instant.now()
+        )
+        val handler = TestRefreshHandler(oldGrant)
+        val newBearer = "new bearer token"
+        val newRefresh = "new refresh token"
+
+        mock.accessTokenResponse(newBearer, newRefresh, oldGrant.scope!!)
+
+        app.getFreshGrant(handler, oldGrant)
+            .verifier()
+            .assertNext {
+                assertEquals(oldGrant.scope, it.scope)
+                assertEquals(newBearer, it.bearerToken)
+                assertEquals(newRefresh, it.refreshToken)
+                assertTrue(it.expires.isAfter(Instant.now()))
+            }.verifyComplete()
+
+        mock.verifyRequest {
+            assertMethod(Method.POST)
+            assertPath("/token")
+            decodeWwwUrlEncoded(request.body()!!).apply {
+                assertEquals(app.clientId, get("client_id"))
+                assertEquals(app.clientSecret, get("client_secret"))
+                assertEquals(app.redirectUri, get("redirect_uri"))
+                assertEquals("refresh_token", get("grant_type"))
+                assertEquals(oldGrant.refreshToken, get("refresh_token"))
+            }
+        }
+    }
+
+    // TODO: Failed refresh
+    // TODO: Get grant without refresh
+
     private fun decodeWwwUrlEncoded(string: String): Map<String, String> =
         string.split("&").associate {
             val bothSides = it.split("=")
             URLDecoder.decode(bothSides.first(), "UTF-8") to
                     URLDecoder.decode(bothSides.last(), "UTF-8")
         }
+
+    private fun MockFuelStore.accessTokenResponse(bearer: String, refresh: String, scope: List<String>) {
+        on {
+            MockResponse(
+                200, """
+                {
+                    "access_token": "$bearer",
+                    "refresh_token": "$refresh",
+                    "token_type": "Bearer",
+                    "expires_in": 604800,
+                    "scope": "${scope.joinToString(" ")}"
+                }
+            """.trimIndent().toByteArray()
+            )
+        }
+    }
 }
