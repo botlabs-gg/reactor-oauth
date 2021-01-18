@@ -52,7 +52,7 @@ class OAuthApplication(
             val bodyStr = res.data.decodeToString()
             val json: JSONObject
             try {
-                json = JSONObject()
+                json = JSONObject(bodyStr)
             } catch (e: Exception) {
                 OAuthException.onInvalidJson(bodyStr)
             }

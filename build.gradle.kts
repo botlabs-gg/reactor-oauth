@@ -9,6 +9,7 @@ version = "1.0-SNAPSHOT"
 
 repositories {
     mavenCentral()
+    jcenter()
     maven { url = URI.create("https://jitpack.io") }
 }
 
@@ -22,4 +23,18 @@ dependencies {
     testImplementation(platform("org.junit:junit-bom:5.7.0"))
     testImplementation("org.junit.jupiter:junit-jupiter")
     testImplementation("com.github.KennethWussmann:mock-fuel:1.3.0")
+    testImplementation("io.projectreactor:reactor-test:3.4.1")
+}
+
+tasks.withType<Test> {
+    useJUnitPlatform {
+        includeEngines("junit-jupiter")
+    }
+}
+
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
+    kotlinOptions {
+        freeCompilerArgs = listOf("-Xjsr305=strict")
+        jvmTarget = "1.8"
+    }
 }
