@@ -87,8 +87,38 @@ class Tests {
         }
     }
 
-    // TODO: Failed refresh
-    // TODO: Get grant without refresh
+    @Test
+    fun refreshTokenRejection(mock: MockFuelStore) {
+        val grant = TokenGrant(
+            bearerToken = "",
+            refreshToken = "",
+            scope = listOf("one", "two", "three"),
+            expires = Instant.now()
+        )
+        val handler = TestRefreshHandler(grant)
+
+        mock.enqueue(MockResponse(400, body = "{}".toByteArray()))
+
+        app.getFreshGrant(handler, grant)
+            .expectCompleteEmpty()
+    }
+
+    @Test
+    fun getGrantNoRefresh() {
+        val grant = TokenGrant(
+            bearerToken = "",
+            refreshToken = "",
+            scope = listOf("one", "two", "three"),
+            expires = Instant.now().plusSeconds(60)
+        )
+        val handler = TestRefreshHandler(grant)
+
+        app.getFreshGrant(handler, grant, toleranceSeconds = 30)
+            .verifier()
+            .assertNext {
+                assertEquals(grant, it)
+            }.verifyComplete()
+    }
 
     private fun decodeWwwUrlEncoded(string: String): Map<String, String> =
         string.split("&").associate {

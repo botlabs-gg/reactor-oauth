@@ -41,7 +41,7 @@ class OAuthApplication(
     ).toGrantMono(handler, true)
 
     /** Returns immediately if the bearer has not expired. Otherwise calls [refreshGrant] */
-    fun <T> getFreshGrant(handler: RefreshHandler<T>, grant: TokenGrant, toleranceSeconds: Long = 1000): Mono<T> {
+    fun <T> getFreshGrant(handler: RefreshHandler<T>, grant: TokenGrant, toleranceSeconds: Long = 300): Mono<T> {
         val expiry = grant.expires.minusSeconds(toleranceSeconds)
         if (Instant.now().isBefore(expiry)) return Mono.just(handler.onUnchanged()!!)
         return refreshGrant(handler, grant)
