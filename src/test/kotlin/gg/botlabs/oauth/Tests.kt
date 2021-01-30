@@ -97,7 +97,7 @@ class Tests {
         )
         val handler = TestRefreshHandler(grant)
 
-        mock.enqueue(MockResponse(400, body = "{}".toByteArray()))
+        mock.enqueue(MockResponse(400, body = """{"error": "invalid_grant"}""".toByteArray()))
 
         app.getFreshGrant(handler, grant)
             .expectCompleteEmpty()

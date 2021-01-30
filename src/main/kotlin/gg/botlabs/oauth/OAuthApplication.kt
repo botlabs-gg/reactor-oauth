@@ -58,13 +58,13 @@ class OAuthApplication(
                 OAuthException.onInvalidJson(bodyStr)
             }
 
-            if (!res.isSuccessful) {
-                if (!isRefresh) OAuthException.onError(json)
-
+            if (json.optString("error") == "invalid_grant") {
                 val refreshHandler = handler as RefreshHandler
                 @Suppress("UNCHECKED_CAST") // Type cast safe as Mono<Void> returns empty
-                return@flatMap refreshHandler.onFailure(res) as Mono<T>
+                return@flatMap refreshHandler.onInvalidGrant(res) as Mono<T>
             }
+
+            if (!res.isSuccessful) OAuthException.onError(json)
 
             handler.handleTokenGrant(json.run {
                 TokenGrant(

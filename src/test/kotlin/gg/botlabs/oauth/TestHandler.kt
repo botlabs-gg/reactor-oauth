@@ -22,7 +22,7 @@ class TestRefreshHandler(val original: TokenGrant) : RefreshHandler<TokenGrant>,
     var failureResponse: Response? = null
         private set
 
-    override fun onFailure(response: Response): Mono<Void> {
+    override fun onInvalidGrant(response: Response): Mono<Void> {
         failureResponse = response
         return Mono.empty()
     }

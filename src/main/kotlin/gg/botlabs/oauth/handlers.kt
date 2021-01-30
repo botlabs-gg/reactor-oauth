@@ -12,6 +12,6 @@ interface RefreshHandler<T> : GrantHandler<T> {
     /** Invoked when checking for staleness and we decide not to refresh */
     fun onUnchanged(): T
 
-    /** Invoked when the server rejects our refresh attempt, possibly requiring reauthentication */
-    fun onFailure(response: Response): Mono<Void>
+    /** Invoked when the server rejects our refresh attempt, requiring reauthentication */
+    fun onInvalidGrant(response: Response): Mono<Void>
 }
