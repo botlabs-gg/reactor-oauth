@@ -2,6 +2,7 @@ import java.net.URI
 
 plugins {
     kotlin("jvm") version "1.4.21"
+    id("maven")
 }
 
 group = "gg.botlabs"
