@@ -42,6 +42,16 @@ class OAuthApplication(
         )
     ).toGrantMono(handler, true)
 
+    fun refresh(refreshToken: String): Mono<TokenGrant> = tokenUrl.httpPost(
+        listOfNotNull(
+            "client_id" to clientId,
+            "client_secret" to clientSecret,
+            "grant_type" to "refresh_token",
+            "refresh_token" to refreshToken,
+            "redirect_uri" to redirectUri
+        )
+    ).toGrantMonoNoHandler()
+
     /** Returns immediately if the bearer has not expired. Otherwise calls [refreshGrant] */
     fun <T> getFreshGrant(handler: RefreshHandler<T>, grant: TokenGrant, toleranceSeconds: Long = 300): Mono<T> {
         val expiry = grant.expires.minusSeconds(toleranceSeconds)
@@ -76,6 +86,29 @@ class OAuthApplication(
                     Instant.now().plusSeconds(getLong("expires_in"))
                 )
             })
+        }
+
+    private fun Request.toGrantMonoNoHandler(): Mono<TokenGrant> = header("Accept", "application/json")
+        .monoResponse()
+        .map { res ->
+            val bodyStr = res.data.decodeToString()
+            val json: JSONObject
+            try {
+                json = JSONObject(bodyStr)
+            } catch (e: Exception) {
+                OAuthException.onInvalidJson(bodyStr)
+            }
+
+            if (!res.isSuccessful) OAuthException.onError(json)
+
+            json.run {
+                TokenGrant(
+                    getString("access_token"),
+                    getString("refresh_token"),
+                    optString("scope")?.split(' '),
+                    Instant.now().plusSeconds(getLong("expires_in"))
+                )
+            }
         }
 
 }
