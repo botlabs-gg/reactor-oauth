@@ -29,14 +29,16 @@ class OAuthApplication(
     ).toGrantMono(handler, false)
 
     /** Attempts to refresh a grant */
-    fun <T> refreshGrant(handler: RefreshHandler<T>, grant: TokenGrant): Mono<T> = tokenUrl.httpPost(
+    fun <T> refreshGrant(handler: RefreshHandler<T>, grant: TokenGrant): Mono<T> = refreshGrant(handler, grant.refreshToken)
+
+    /** Attempts to refresh a grant */
+    fun <T> refreshGrant(handler: RefreshHandler<T>, refreshToken: String): Mono<T> = tokenUrl.httpPost(
         listOfNotNull(
             "client_id" to clientId,
             "client_secret" to clientSecret,
             "grant_type" to "refresh_token",
-            "refresh_token" to grant.refreshToken,
-            "redirect_uri" to redirectUri,
-            grant.scope?.let { "scope" to it.joinToString(" ") }
+            "refresh_token" to refreshToken,
+            "redirect_uri" to redirectUri
         )
     ).toGrantMono(handler, true)
 
