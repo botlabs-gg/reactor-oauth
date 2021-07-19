@@ -4,8 +4,10 @@ import com.github.kittinunf.fuel.core.Request
 import com.github.kittinunf.fuel.core.isSuccessful
 import com.github.kittinunf.fuel.httpPost
 import com.github.kittinunf.fuel.reactor.monoResponse
+import com.github.kittinunf.fuel.reactor.monoUnit
 import org.json.JSONObject
 import reactor.core.publisher.Mono
+import java.lang.IllegalStateException
 import java.time.Instant
 
 @Suppress("MemberVisibilityCanBePrivate", "unused")
@@ -13,7 +15,8 @@ class OAuthApplication(
     val tokenUrl: String,
     val clientId: String,
     val clientSecret: String,
-    val redirectUri: String
+    val redirectUri: String,
+    val revocationUrl: String? = null
 ) {
 
     /** Exchanges the code for a new grant of type authorization_code */
@@ -51,6 +54,13 @@ class OAuthApplication(
             "redirect_uri" to redirectUri
         )
     ).toGrantMonoNoHandler()
+
+    fun revoke(token: String): Mono<Unit> {
+        if (revocationUrl == null) throw IllegalStateException("Revocation URL not provided")
+        return revocationUrl.httpPost(
+            listOf("token" to token)
+        ).monoUnit()
+    }
 
     /** Returns immediately if the bearer has not expired. Otherwise calls [refreshGrant] */
     fun <T> getFreshGrant(handler: RefreshHandler<T>, grant: TokenGrant, toleranceSeconds: Long = 300): Mono<T> {
