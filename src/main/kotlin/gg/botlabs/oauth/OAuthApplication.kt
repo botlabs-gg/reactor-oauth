@@ -58,7 +58,11 @@ class OAuthApplication(
     fun revoke(token: String): Mono<Unit> {
         if (revocationUrl == null) throw IllegalStateException("Revocation URL not provided")
         return revocationUrl.httpPost(
-            listOf("token" to token)
+            listOf(
+                "token" to token,
+                "client_id" to clientId,
+                "client_secret" to clientSecret
+            )
         ).monoUnit()
     }
 
