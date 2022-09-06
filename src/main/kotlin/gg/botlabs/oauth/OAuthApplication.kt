@@ -98,7 +98,7 @@ class OAuthApplication(
                     getString("refresh_token"),
                     optString("scope")?.split(' '),
                     Instant.now().plusSeconds(getLong("expires_in")),
-                    getJSONObject("guild").optString("id")
+                    optJSONObject("guild").optString("id")
                 )
             })
         }
