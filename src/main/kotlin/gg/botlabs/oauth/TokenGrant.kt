@@ -1,5 +1,6 @@
 package gg.botlabs.oauth
 
+import org.json.JSONObject
 import java.time.Instant
 
 data class TokenGrant(
@@ -7,5 +8,6 @@ data class TokenGrant(
     val refreshToken: String,
     val scope: List<String>?,
     val expires: Instant,
-    val guildId: String?
+    val guild: JSONObject
 )
+
