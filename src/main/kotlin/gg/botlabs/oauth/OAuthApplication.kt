@@ -98,7 +98,7 @@ class OAuthApplication(
                     getString("refresh_token"),
                     optString("scope")?.split(' '),
                     Instant.now().plusSeconds(getLong("expires_in")),
-                    optJSONObject("guild")
+                    this
                 )
             })
         }
@@ -122,7 +122,7 @@ class OAuthApplication(
                     getString("refresh_token"),
                     optString("scope")?.split(' '),
                     Instant.now().plusSeconds(getLong("expires_in")),
-                    optJSONObject("guild")
+                    this
                 )
             }
         }

@@ -8,6 +8,6 @@ data class TokenGrant(
     val refreshToken: String,
     val scope: List<String>?,
     val expires: Instant,
-    val guild: JSONObject
+    val rawJson: JSONObject
 )
 
