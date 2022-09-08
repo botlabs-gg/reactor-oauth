@@ -97,7 +97,8 @@ class OAuthApplication(
                     getString("access_token"),
                     getString("refresh_token"),
                     optString("scope")?.split(' '),
-                    Instant.now().plusSeconds(getLong("expires_in"))
+                    Instant.now().plusSeconds(getLong("expires_in")),
+                    this
                 )
             })
         }
@@ -120,7 +121,8 @@ class OAuthApplication(
                     getString("access_token"),
                     getString("refresh_token"),
                     optString("scope")?.split(' '),
-                    Instant.now().plusSeconds(getLong("expires_in"))
+                    Instant.now().plusSeconds(getLong("expires_in")),
+                    this
                 )
             }
         }
