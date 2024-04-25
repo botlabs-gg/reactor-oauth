@@ -7,7 +7,6 @@ import java.lang.RuntimeException
 class OAuthException(override val message: String, val rfcError: String? = null) : RuntimeException(message) {
     override fun fillInStackTrace() = this
 
-
     companion object {
         fun onInvalidJson(body: String): Nothing {
             throw OAuthException("Failed to get grant. Invalid JSON response: $body")
