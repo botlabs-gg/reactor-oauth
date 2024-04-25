@@ -3,6 +3,7 @@ package gg.botlabs.oauth
 import org.json.JSONObject
 import org.springframework.http.MediaType
 import org.springframework.web.reactive.function.client.WebClient
+import org.springframework.web.util.UriBuilder
 import reactor.core.publisher.Mono
 import java.lang.IllegalStateException
 import java.time.Instant
@@ -20,29 +21,25 @@ class OAuthApplication(
 
     /** Exchanges the code for a new grant of type authorization_code */
     fun <T> exchangeCode(handler: GrantHandler<T>, code: String, scope: List<String>? = null): Mono<T> =
-        webClient.post()
-            .uri(tokenUrl)
-            .contentType(MediaType.APPLICATION_JSON)
-            .bodyValue(
-                listOfNotNull(
-                    "client_id" to clientId,
-                    "client_secret" to clientSecret,
-                    "grant_type" to "authorization_code",
-                    "code" to code,
-                    "redirect_uri" to redirectUri,
-                    scope?.let { "scope" to it.joinToString(" ") }
-                )
-            ).toGrantMono(handler)
+        webClient.post().uri(buildUrl(tokenUrl,
+            listOfNotNull(
+                "client_id" to clientId,
+                "client_secret" to clientSecret,
+                "grant_type" to "authorization_code",
+                "code" to code,
+                "redirect_uri" to redirectUri,
+                scope?.let { "scope" to it.joinToString(" ") }
+            )
+        )).toGrantMono(handler)
 
     /** Attempts to refresh a grant */
     fun <T> refreshGrant(handler: RefreshHandler<T>, grant: TokenGrant): Mono<T> =
         refreshGrant(handler, grant.refreshToken)
 
     /** Attempts to refresh a grant */
-    fun <T> refreshGrant(handler: RefreshHandler<T>, refreshToken: String): Mono<T> = webClient.post()
-        .uri(tokenUrl)
-        .contentType(MediaType.APPLICATION_JSON)
-        .bodyValue(
+    fun <T> refreshGrant(handler: RefreshHandler<T>, refreshToken: String): Mono<T> = webClient.post().uri(
+        buildUrl(
+            tokenUrl,
             listOfNotNull(
                 "client_id" to clientId,
                 "client_secret" to clientSecret,
@@ -50,28 +47,33 @@ class OAuthApplication(
                 "refresh_token" to refreshToken,
                 "redirect_uri" to redirectUri
             )
-        ).toGrantMono(handler)
+        )
+    ).toGrantMono(handler)
 
     fun refresh(refreshToken: String): Mono<TokenGrant> = webClient.post()
-        .uri(tokenUrl)
-        .contentType(MediaType.APPLICATION_JSON)
-        .bodyValue(
-            listOfNotNull(
-                "client_id" to clientId,
-                "client_secret" to clientSecret,
-                "grant_type" to "refresh_token",
-                "refresh_token" to refreshToken,
-                "redirect_uri" to redirectUri
+        .uri(
+            buildUrl(
+                tokenUrl,
+                listOfNotNull(
+                    "client_id" to clientId,
+                    "client_secret" to clientSecret,
+                    "grant_type" to "refresh_token",
+                    "refresh_token" to refreshToken,
+                    "redirect_uri" to redirectUri
+                )
             )
         ).toGrantMonoNoHandler()
 
     fun revoke(token: String): Mono<Unit> {
         if (revocationUrl == null) throw IllegalStateException("Revocation URL not provided")
-        return webClient.post().uri(revocationUrl).contentType(MediaType.APPLICATION_JSON).bodyValue(
-            listOf(
-                "token" to token,
-                "client_id" to clientId,
-                "client_secret" to clientSecret
+        return webClient.post().uri(
+            buildUrl(
+                revocationUrl,
+                listOf(
+                    "token" to token,
+                    "client_id" to clientId,
+                    "client_secret" to clientSecret
+                )
             )
         ).retrieve().toBodilessEntity().thenReturn(Unit)
     }
@@ -134,4 +136,16 @@ class OAuthApplication(
                     )
                 }
             }
+
+    private fun buildUrl(baseUri: String, arguments: List<Pair<String, String>>): String = buildString {
+        append(baseUri)
+        arguments.forEachIndexed { i, pair ->
+            if (i == 0) append("?")
+            else append("&")
+            append(pair.first)
+            append("=")
+            append(pair.second)
+        }
+    }
+
 }
