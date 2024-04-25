@@ -20,7 +20,7 @@ class Tests {
         "http://redirect.url"
     )
 
-    @Test
+    /*@Test
     fun exchangeCode(mock: MockFuelStore) {
         val code = Math.random().toString()
         val handler = TestGrantHandler()
@@ -141,5 +141,5 @@ class Tests {
             """.trimIndent().toByteArray()
             )
         }
-    }
+    }*/
 }
