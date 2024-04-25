@@ -1,11 +1,13 @@
 package gg.botlabs.oauth
 
 import org.json.JSONObject
-import org.springframework.http.MediaType
 import org.springframework.web.reactive.function.client.WebClient
-import org.springframework.web.util.UriBuilder
+import org.springframework.web.util.DefaultUriBuilderFactory
+import org.springframework.web.util.UriBuilderFactory
 import reactor.core.publisher.Mono
 import java.lang.IllegalStateException
+import java.net.URI
+import java.net.URL
 import java.net.URLEncoder
 import java.nio.charset.Charset
 import java.time.Instant
@@ -139,9 +141,8 @@ class OAuthApplication(
                 }
             }
 
-    private fun buildUrl(baseUri: String, arguments: List<Pair<String, String>>): String = buildString {
-        val encoder =
-        append(baseUri)
+    private fun buildUrl(baseUrl: String, arguments: List<Pair<String, String>>): URI = URI(buildString {
+        append(baseUrl)
         arguments.forEachIndexed { i, pair ->
             if (i == 0) append("?")
             else append("&")
@@ -149,6 +150,6 @@ class OAuthApplication(
             append("=")
             append(URLEncoder.encode(pair.second, Charset.forName("UTF-8")))
         }
-    }
+    })
 
 }
