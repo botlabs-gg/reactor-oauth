@@ -6,6 +6,8 @@ import org.springframework.web.reactive.function.client.WebClient
 import org.springframework.web.util.UriBuilder
 import reactor.core.publisher.Mono
 import java.lang.IllegalStateException
+import java.net.URLEncoder
+import java.nio.charset.Charset
 import java.time.Instant
 
 @Suppress("MemberVisibilityCanBePrivate", "unused")
@@ -138,13 +140,14 @@ class OAuthApplication(
             }
 
     private fun buildUrl(baseUri: String, arguments: List<Pair<String, String>>): String = buildString {
+        val encoder =
         append(baseUri)
         arguments.forEachIndexed { i, pair ->
             if (i == 0) append("?")
             else append("&")
-            append(pair.first)
+            append(URLEncoder.encode(pair.first, Charset.forName("UTF-8")))
             append("=")
-            append(pair.second)
+            append(URLEncoder.encode(pair.second, Charset.forName("UTF-8")))
         }
     }
 
