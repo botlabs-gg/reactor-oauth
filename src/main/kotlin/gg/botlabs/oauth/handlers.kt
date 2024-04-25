@@ -1,6 +1,6 @@
 package gg.botlabs.oauth
 
-import com.github.kittinunf.fuel.core.Response
+import org.springframework.http.ResponseEntity
 import reactor.core.publisher.Mono
 
 interface GrantHandler<T> {
@@ -13,5 +13,5 @@ interface RefreshHandler<T> : GrantHandler<T> {
     fun onUnchanged(): T
 
     /** Invoked when the server rejects our refresh attempt, requiring reauthentication */
-    fun onInvalidGrant(response: Response): Mono<Void>
+    fun onInvalidGrant(response: ResponseEntity<String>): Mono<Void>
 }

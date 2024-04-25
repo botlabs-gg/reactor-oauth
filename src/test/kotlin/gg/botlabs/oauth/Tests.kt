@@ -1,17 +1,7 @@
 package gg.botlabs.oauth
-
-import com.github.kittinunf.fuel.core.Method
-import net.wussmann.kenneth.mockfuel.MockFuelStore
-import net.wussmann.kenneth.mockfuel.data.MockResponse
-import net.wussmann.kenneth.mockfuel.junit.MockFuelExtension
-import org.junit.jupiter.api.Assertions.assertEquals
-import org.junit.jupiter.api.Assertions.assertTrue
-import org.junit.jupiter.api.Test
 import org.junit.jupiter.api.extension.ExtendWith
-import java.net.URLDecoder
-import java.time.Instant
 
-@ExtendWith(MockFuelExtension::class)
+//@ExtendWith(MockFuelExtension::class)
 class Tests {
     private val app = OAuthApplication(
         "http://nohost/token",

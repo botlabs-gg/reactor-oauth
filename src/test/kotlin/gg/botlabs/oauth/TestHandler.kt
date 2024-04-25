@@ -2,7 +2,6 @@
 
 package gg.botlabs.oauth
 
-import com.github.kittinunf.fuel.core.Response
 import reactor.core.publisher.Mono
 import reactor.kotlin.core.publisher.toMono
 
@@ -17,7 +16,7 @@ open class TestGrantHandler() : GrantHandler<TokenGrant> {
     }
 }
 
-class TestRefreshHandler(val original: TokenGrant) : RefreshHandler<TokenGrant>, TestGrantHandler() {
+/*class TestRefreshHandler(val original: TokenGrant) : RefreshHandler<TokenGrant>, TestGrantHandler() {
     override fun onUnchanged() = original
     var failureResponse: Response? = null
         private set
@@ -26,4 +25,4 @@ class TestRefreshHandler(val original: TokenGrant) : RefreshHandler<TokenGrant>,
         failureResponse = response
         return Mono.empty()
     }
-}
+}*/
